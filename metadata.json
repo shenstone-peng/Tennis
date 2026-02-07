@@ -1,0 +1,7 @@
+{
+  "name": "Pro-Mirror: Sports Form Comparison",
+  "description": "A professional-grade video analysis tool that allows users to compare their sports technique side-by-side with professional athletes. Features frame-by-frame synchronization and Gemini-powered technique analysis.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
