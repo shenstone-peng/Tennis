@@ -16,8 +16,9 @@ import {
 } from 'lucide-react';
 import { VideoUploader } from './components/VideoUploader';
 import { AnalysisPanel } from './components/AnalysisPanel';
+import { AutoSyncButton } from './components/AutoSyncButton';
 import { analyzeFrames } from './services/geminiService';
-import { AnalysisResult, ComparisonState } from './types';
+import { AnalysisResult, ComparisonState, SyncResult } from './types';
 
 const App: React.FC = () => {
   const [userVideo, setUserVideo] = useState<string | null>(null);
@@ -32,6 +33,8 @@ const App: React.FC = () => {
   const [analysisState, setAnalysisState] = useState<ComparisonState>(ComparisonState.IDLE);
   const [globalFrameOffset, setGlobalFrameOffset] = useState(0);
   const [wheelSensitivity, setWheelSensitivity] = useState(1);
+  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
+  const [syncOffset, setSyncOffset] = useState(0);
 
   const userVideoRef = useRef<HTMLVideoElement>(null);
   const proVideoRef = useRef<HTMLVideoElement>(null);
@@ -173,6 +176,17 @@ const App: React.FC = () => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleSyncComplete = (offset: number, result: SyncResult) => {
+    setSyncOffset(offset);
+    setSyncResult(result);
+
+    if (userVideoRef.current && proVideoRef.current) {
+      const targetTime = Math.max(0, proVideoRef.current.currentTime - offset);
+      userVideoRef.current.currentTime = targetTime;
+      setUserCurrentTime(targetTime);
+    }
   };
 
   return (
@@ -341,7 +355,26 @@ const App: React.FC = () => {
               </div>
             </div>
 
+            {syncResult && (
+              <div className="bg-green-900/30 border border-green-800/50 rounded-xl p-4">
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="text-green-400 font-medium">Auto Sync Complete</span>
+                  <span className="text-slate-400">|</span>
+                  <span className="text-slate-300">Offset: {syncOffset > 0 ? '+' : ''}{syncOffset.toFixed(2)}s</span>
+                  <span className="text-slate-400">|</span>
+                  <span className="text-slate-300">Confidence: {(syncResult.confidence * 100).toFixed(0)}%</span>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-end gap-3">
+              <AutoSyncButton
+                userVideoRef={userVideoRef}
+                proVideoRef={proVideoRef}
+                userVideoSrc={userVideo}
+                proVideoSrc={proVideo}
+                onSyncComplete={handleSyncComplete}
+              />
               <button
                 onClick={handleAnalyze}
                 disabled={!userVideo || !proVideo || analysisState === ComparisonState.ANALYZING}
@@ -352,7 +385,7 @@ const App: React.FC = () => {
                 ) : (
                   <Sparkles size={18} />
                 )}
-                {analysisState === ComparisonState.ANALYZING ? 'ANALYZING...' : 'SYNC & ANALYZE'}
+                {analysisState === ComparisonState.ANALYZING ? 'ANALYZING...' : 'ANALYZE'}
               </button>
             </div>
           </div>

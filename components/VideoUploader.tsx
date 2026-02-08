@@ -1,6 +1,7 @@
 
 import React, { useRef, RefObject, useState, useEffect } from 'react';
-import { Upload, Video, X } from 'lucide-react';
+import { Upload, Video, X, ScanLine } from 'lucide-react';
+import { PoseOverlay } from './PoseOverlay';
 
 interface VideoUploaderProps {
   label: string;
@@ -32,6 +33,7 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
   const actualVideoRef = videoRef || internalVideoRef;
   const [currentTime, setCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
+  const [showPose, setShowPose] = useState(false);
 
   useEffect(() => {
     const video = actualVideoRef.current;
@@ -83,7 +85,15 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
             playsInline
             onTimeUpdate={handleTimeUpdate}
           />
+          <PoseOverlay videoRef={actualVideoRef as React.RefObject<HTMLVideoElement>} isActive={showPose} />
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+            <button 
+              onClick={() => setShowPose(!showPose)}
+              className={`p-3 rounded-full transition-colors shadow-lg ${showPose ? 'bg-blue-500 hover:bg-blue-600' : 'bg-slate-700 hover:bg-slate-600'}`}
+              title="Toggle Pose Detection"
+            >
+              <ScanLine size={24} className="text-white" />
+            </button>
             <button 
               onClick={() => onClear()}
               className="p-3 bg-red-500 rounded-full hover:bg-red-600 transition-colors shadow-lg"
@@ -96,6 +106,13 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
               {label}
             </span>
           </div>
+          {showPose && (
+            <div className="absolute top-4 right-4">
+              <span className="px-2 py-1 rounded text-xs font-medium bg-blue-500/80 text-white">
+                Pose Detection ON
+              </span>
+            </div>
+          )}
         </div>
         <div className="bg-slate-900/40 rounded-xl p-4 border border-slate-800/50 flex flex-col gap-3">
           <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
